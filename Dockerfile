@@ -37,7 +37,7 @@ RUN apt-get update -qq && \
     pip install j2cli && \
     apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/*
 
-ENV ASTERISK_VERSION=14.0.2
+ENV ASTERISK_VERSION=15.3.0
 COPY build-asterisk.sh /build-asterisk
 RUN /build-asterisk && rm -f /build-asterisk
 COPY asterisk-docker-entrypoint.sh /
