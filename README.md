@@ -1,4 +1,4 @@
-# asterisk-docker PATCHED
+# asterisk-docker v15.5
 ![Build Status](https://img.shields.io/docker/build/guglio/asterisk-docker-patched.svg)
 
 Applied patch in order to show ip after "Failed to
