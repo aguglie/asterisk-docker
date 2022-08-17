@@ -1,5 +1,4 @@
 FROM debian:stretch as builder
-MAINTAINER Respoke <info@respoke.io>
 
 RUN useradd --system asterisk
 
@@ -36,19 +35,23 @@ RUN apt-get update -qq && \
     apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/*
 
 ENV ASTERISK_VERSION=16.27.0
-COPY build-asterisk.sh /build-asterisk
-RUN /build-asterisk && rm -f /build-asterisk
-COPY asterisk-docker-entrypoint.sh /
+COPY build-asterisk.sh /build-asterisk.sh
+RUN /build-asterisk.sh && rm -f /build-asterisk.sh
 
 # ---------------------------------
 
 FROM debian:stretch-slim
 
+COPY --from=builder /usr/src/asterisk /usr/src/asterisk 
+
 RUN useradd --system asterisk && \
+
+    # Install dependencies
     apt-get update -qq && \
     DEBIAN_FRONTEND=noninteractive \
     apt-get install -y --no-install-recommends \
             ca-certificates \
+            make \
             binutils \
             curl \
             libcurl3 \
@@ -71,22 +74,17 @@ RUN useradd --system asterisk && \
             unixodbc \
             uuid \
             && \
-    apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/* && \
+    apt-get purge -y --auto-remove && \
+    rm -rf /var/lib/apt/lists/* && \
+
+    # install Asterisk    
+    cd /usr/src/asterisk && \
+    make install && \
     chown -R asterisk:asterisk /var/*/asterisk && \
-    chmod -R 750 /var/spool/asterisk
-
-
-COPY --from=builder /etc/asterisk/ /etc/asterisk/
-COPY --from=builder /usr/sbin/ /usr/sbin/
-COPY --from=builder /usr/lib/asterisk/ /usr/lib/asterisk/
-COPY --from=builder /usr/lib/libasterisk* /usr/lib/
-COPY --from=builder /run/asterisk/ /run/asterisk/
-COPY --from=builder /var/lib/asterisk/ /var/lib/asterisk/
-COPY --from=builder /var/spool/asterisk/ /var/spool/asterisk/
-COPY --from=builder /var/log/asterisk /var/log/asterisk
-
-COPY asterisk-docker-entrypoint.sh /
-
+    chmod -R 750 /var/spool/asterisk && \
+    mkdir -p /etc/asterisk/ && \
+    cp /usr/src/asterisk/configs/basic-pbx/*.conf /etc/asterisk/ && \
+    sed -i -E 's/^;(run)(user|group)/\1\2/' /etc/asterisk/asterisk.conf && \
+    rm -rf /usr/src/asterisk
 
 CMD ["/usr/sbin/asterisk", "-f"]
-ENTRYPOINT ["/asterisk-docker-entrypoint.sh"]
