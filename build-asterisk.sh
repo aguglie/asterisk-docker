@@ -14,13 +14,10 @@ cd /usr/src/asterisk
 curl -vsL http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-${ASTERISK_VERSION}.tar.gz |
     tar --strip-components 1 -xz
 
-sed -i 's/ast_log(LOG_NOTICE, "Failed to authenticate device %s\\n", sip_get_header(req, "From"));/ast_log(LOG_NOTICE, "Failed to authenticate device %s at '\''%s'\''\\n", sip_get_header(req, "From"), ast_sockaddr_stringify(addr));/g' channels/chan_sip.c
-
-
 # 1.5 jobs per core works out okay
 : ${JOBS:=$(( $(nproc) + $(nproc) / 2 ))}
 
-./configure  --with-resample --with-pjproject-bundled
+./configure  --with-resample --without-pjproject-bundled --with-jansson-bundled
 make menuselect/menuselect menuselect-tree menuselect.makeopts
 
 # disable BUILD_NATIVE to avoid platform issues
